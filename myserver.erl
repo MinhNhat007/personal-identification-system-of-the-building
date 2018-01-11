@@ -5,25 +5,26 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, 
 	 terminate/2, code_change/3]).
 
--export([start/0, add/2, verify/1, delete/1]).
+-export([start/0, add/3, verify/2, delete/1]).
 
 %% define-------------------------------------------------------------
 -define(SERVER, ?MODULE).
--record(employee, {name, id}).
+-record(employee, {name, id, accessPerms}).
 
 %% function write from here-------------------------------------------
 %% add new employee---------------------------------------------------
 %%--------------------------------------------------------------------
 %%--------------------------------------------------------------------
-add(Name, Id) ->
+add(Name, Id, Perms) ->
 	gen_server:call(?MODULE, 
-			{add, #employee{name=Name, id = Id}}).
+			{add, #employee{name=Name, id = Id, accessPerms=Perms}}).
 
 %% verify id function-------------------------------------------------
 %%--------------------------------------------------------------------
 %%--------------------------------------------------------------------
-verify(Id) ->
-	gen_server:call(?MODULE, {verify, Id}).
+
+verify(Id,Perm) ->
+	gen_server:call(?MODULE, {verify, Id,Perm}).
 
 %% delete id function-------------------------------------------------
 %%--------------------------------------------------------------------
@@ -37,24 +38,30 @@ delete(Id) ->
 %%--------------------------------------------------------------------
 
 % call server function add
-handle_call({add, #employee{name=Name, id=Id}}, _From, Library) ->
+handle_call({add, #employee{name=Name, id=Id, accessPerms=Perms}}, _From, Library) ->
 	Response = case dict:is_key(Id, Library) of
 		true ->	
 			NewLibrary = Library,
 			{already_exsist, Name};
 		false ->
-			NewLibrary = dict:append(Id, Name, Library),
+			NewLibrary = dict:append(Id, {Name,Perms}, Library),
 			{ok, Name}	
 	end,	
 	gen_server:reply(_From, Response),
 	{reply, Response, NewLibrary};
 
 % call server function verify id
-handle_call({verify, Id}, _From, Library) ->
+handle_call({verify, Id, Perm}, _From, Library) ->
 	Response = case dict:is_key(Id, Library) of
 		true ->
-			{ok, Value} = dict:find(Id, Library),
-			{admission, hd(Value)};
+			{ok, Res} = dict:find(Id, Library),
+			{Name,AccessPerms} = hd(Res),
+			case isInList(Perm,AccessPerms) of
+				true ->
+					{admission, Name};
+				false ->
+					no_admission
+			end;
 		false ->
 			no_admission
 	end,
@@ -64,9 +71,10 @@ handle_call({verify, Id}, _From, Library) ->
 handle_call({delete, Id}, _From, Library) ->
 	Response = case dict:is_key(Id, Library) of
 		true ->
-			{ok, Name} = dict:find(Id, Library),
+			{ok, Res} = dict:find(Id, Library),
+			{Name,_} = hd(Res),
 			NewLibrary = dict:erase(Id, Library),
-			{deleted, Id, hd(Name)};
+			{deleted, Id, Name};
 		false ->
 			NewLibrary = Library,
 			{no_found, Id}
@@ -113,3 +121,13 @@ terminate(_Reason, _State) ->
 %%--------------------------------------------------------------------
 code_change(_OldVsn, State, _Extra) ->
         {ok, State}.
+
+%% internal functions-------------------------------------------------
+%%--------------------------------------------------------------------
+%%--------------------------------------------------------------------
+	
+isInList(_,[]) -> false;
+isInList(Elem,[H|T]) ->
+	if Elem==H -> true;
+	   true -> isInList(Elem,T)
+	end.
