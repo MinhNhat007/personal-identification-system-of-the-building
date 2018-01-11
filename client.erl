@@ -29,22 +29,26 @@ generate_id() -> crypto:rand_uniform(1, 1000).
 gen_client(Server) ->
 	Name = generate_name(),
 	Id = 1,
+	myserver:add(Name, Id),
 
-	%myserver:add(Name, Id),
 %czemu nie dziala receive, kurczek
-	%	{_} ->
-	%		io:format("hehe1");
-	%	{_, _} ->
-	%		io:format("hehe2");
-	%	{_, _, _} ->
-	%		io:format("hehe3");
-	%	{_, _, _, _} ->
-	%		io:format("hehe4");
-	%	{_, _, _, _, _} ->
-	%		io:format("hehe5")
-	%	terminate ->
-	%		ok	
-	%end.
+	receive
+		{_} ->
+			io:format("hehe1");
+		{_, _} ->
+			io:format("hehe2");
+		{_, _, _} ->
+			io:format("hehe3");
+		{_, _, _, _} ->
+			io:format("hehe4");
+		{_, _, _, _, _} ->
+			io:format("hehe5");
+		terminate ->
+			ok
+	after
+		6000 ->
+			ok	
+	end.
 	
 loop(Server) ->
 	Id = spawn(?MODULE, gen_client, [Server]).
