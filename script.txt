@@ -1,4 +1,4 @@
 c(myserver).
 c(client).
 {ok, Server} = myserver:start().
-client:start(Server).
+client:start(self()).

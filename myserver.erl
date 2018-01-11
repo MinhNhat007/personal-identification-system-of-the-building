@@ -44,8 +44,9 @@ handle_call({add, #employee{name=Name, id=Id}}, _From, Library) ->
 			{already_exsist, Name};
 		false ->
 			NewLibrary = dict:append(Id, Name, Library),
-			{ok, added}	
+			{ok, Name}	
 	end,	
+	gen_server:reply(_From, Response),
 	{reply, Response, NewLibrary};
 
 % call server function verify id
@@ -70,11 +71,17 @@ handle_call({delete, Id}, _From, Library) ->
 			NewLibrary = Library,
 			{no_found, Id}
 	end,
-	{reply, Response, NewLibrary}.
+	{reply, Response, NewLibrary};
 
 % call server for case error
 handle_call(_Message, _From, Library) ->
 	{reply, error, Library}.
+
+%% cast function------------------------------------------------------
+%%--------------------------------------------------------------------
+%%--------------------------------------------------------------------
+handle_cast(_Msg, State) ->
+    {noreply, State}.
 
 %% start server-------------------------------------------------------
 %%--------------------------------------------------------------------
@@ -88,11 +95,6 @@ init([]) ->
 	Library = dict:new(),
 	{ok, Library}.
 
-%% cast function------------------------------------------------------
-%%--------------------------------------------------------------------
-%%--------------------------------------------------------------------
-handle_cast(_Msg, State) ->
-    {noreply, State}.
 
 %% info function------------------------------------------------------
 %%--------------------------------------------------------------------
