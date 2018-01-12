@@ -1,0 +1,5 @@
+c(server).
+c(controller).
+c(ui).
+{ok, Server} = server:start().
+ui:start().
