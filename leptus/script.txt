@@ -1,0 +1,5 @@
+c(server).
+c(controller).
+{ok, Server} = server:start().
+c(backend).
+leptus:start_listener(http, [{'_', [{backend, undefined_state}]}]).
