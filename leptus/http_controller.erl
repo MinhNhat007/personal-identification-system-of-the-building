@@ -1,4 +1,4 @@
--module(backend).
+-module(http_controller).
 -compile({parse_transform, leptus_pt}).
 -import(controller, [gen_emp/1, get_list_db/0, simulation/0, type_simulation/0]).
 

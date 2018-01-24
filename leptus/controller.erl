@@ -14,6 +14,7 @@
 %---------------------------------------------------------------------
 
 % create 1 employee who is described by a process---------------------
+%% [{request_entry, }]
 gen_client() ->
 	receive
 		{_, {added, {Name, Per}}} ->
@@ -36,7 +37,7 @@ gen_client() ->
 					ok
     		end,
 			gen_client();	
-
+		
 		terminate ->
 			ok
 	end.
@@ -47,7 +48,7 @@ loop(0) ->
 
 loop(N) ->
 	Name = generate_name(),
-	Id = spawn(?MODULE, gen_client, []),
+	Id = spawn(?MODULE, gen_client, []),% generate employee
 	Per = generate_permission(),
 	io:format("~p.System created ~p for ~p with permission ~p~n", [N, Id, Name, Per]),
 	server:add(Name, Id, Per),
