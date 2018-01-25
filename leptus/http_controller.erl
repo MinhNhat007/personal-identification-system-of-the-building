@@ -1,7 +1,8 @@
 -module(http_controller).
 -compile({parse_transform, leptus_pt}).
 % Import all functions------------------------------------------------
--import(controller, [gen_emp/1, get_list_db/0, simulation/0, type_simulation/0]).
+-import(controller, [gen_emp/1, get_list_db/0, simulation/0, type_simulation/0,
+					get_server_time/0]).
 
 % Export all functions------------------------------------------------
 -export([init/3]).
@@ -61,6 +62,13 @@ get("/3", _Reg, State) ->
 			end,
 	{_, Reason} = Message,
 	Body = [{<<"status">>, list_to_binary(atom_to_list(Status))}, {<<"type">>, list_to_binary(atom_to_list(Type))}, {<<"id">>, list_to_binary(pid_to_list(ID))}, {<<"server">>, list_to_binary(atom_to_list(Reason))}],
+	{Status, {json, Body}, State};
+
+% Get function to get time from server--------------------------------
+get("/3/get_clock", _Reg, State) ->
+	Status = ok,
+	{Hour, Minute} = controller:get_server_time(),
+	Body = [{<<"hour">>, list_to_binary(integer_to_list(Hour))}, {<<"minute">>, list_to_binary(integer_to_list(Minute))}],	
 	{Status, {json, Body}, State}.
 
 %%--------------------------------------------------------------------

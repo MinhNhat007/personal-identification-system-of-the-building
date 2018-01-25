@@ -2,6 +2,19 @@
   position: relative;
 }
 
+h1 {
+  color: #1E90FF	;
+}
+
+#mySpan {
+  padding: 15px;
+  font-size: 20px;
+}
+
+body {
+  background-color: #E0FDFE;
+}
+
 #myCanvas{
   position: absolute;
   top: 0px;

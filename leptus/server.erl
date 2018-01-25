@@ -6,7 +6,8 @@
 	 terminate/2, code_change/3]).
 
 -export([start/0, add/3, verify/1, delete/1, get_db/0, get_length/0,
-		start_clock/0, time_taken/1, get_time/0, check_time/1]).
+		start_clock/0, time_taken/1, get_time/0, check_time/1, 
+		get_actual_time/0]).
 
 %% define-------------------------------------------------------------
 -define(SERVER, ?MODULE).
@@ -48,11 +49,24 @@ delete(Id) ->
 get_db() ->
 	gen_server:call(?MODULE, {get_db}).
 
+%% get_actual_time----------------------------------------------------
+%%--------------------------------------------------------------------
+%%--------------------------------------------------------------------
+get_actual_time() ->
+	gen_server:call(?MODULE, {getTime}).
+
 
 
 %% handel call for server---------------------------------------------
 %%--------------------------------------------------------------------
 %%--------------------------------------------------------------------
+
+% call server function get_length
+handle_call({getTime}, _From, Library) ->
+	Time = get_time(),
+	Response = {getTime, Time},
+	gen_server:reply(_From, Response),
+	{reply, Response, Library};
 
 % call server function get_length
 handle_call({get_length}, _From, Library) ->

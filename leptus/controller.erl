@@ -2,14 +2,15 @@
 % Import all functions------------------------------------------------
 %%--------------------------------------------------------------------
 %%--------------------------------------------------------------------
--import(server,[add/2, get_db/0, verify/1, get_length/0]).
+-import(server,[add/2, get_db/0, verify/1, get_length/0, get_time/0,
+				get_actual_time/0]).
 
 % Export all functions------------------------------------------------
 %%--------------------------------------------------------------------
 %%--------------------------------------------------------------------
 -export([generate_name/0, generate_permission/0, gen_emp/1, gen_client/0,
 	loop/1, show_emp/0, simulation/1, get_list_db/0, type_simulation/0,
-	check_verify/1]).
+	check_verify/1, get_server_time/0]).
 
 % Initialization------------------------------------------------------
 -define(second, 1000).
@@ -18,6 +19,17 @@
 % Function main-------------------------------------------------------
 %---------------------------------------------------------------------
 %---------------------------------------------------------------------
+
+% Get time from server------------------------------------------------
+get_server_time() ->
+	server:get_actual_time(),
+	Time =	receive
+		{From, {getTime, TimeServer}} ->
+			TimeServer;
+		terminate ->
+			ok	
+	end,
+	Time.
 
 % Check verify for an employee----------------------------------------
 check_verify(ID) ->

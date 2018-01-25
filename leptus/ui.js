@@ -1,6 +1,18 @@
 var host = "http://localhost:8080";
 var simulation;
 $(document).ready(function(){
+
+  function display_ct(){
+    setInterval(function(){
+      var x;
+      $.get(host+"/3/get_clock", function(data){
+            x = String(data["hour"]) + ":" + String(data["minute"] + "0");
+            console.log(x);
+            document.getElementById('mySpan').innerHTML = "Time: " + x;
+      });
+    },1000);
+  }
+
   $("#option_1").click(function(){
     clearInterval(simulation);
     $("#database").hide();
@@ -59,9 +71,11 @@ $(document).ready(function(){
     $(id).fadeOut(250);
     $(id).fadeIn(250);
   }
+
   var blinkIcon;
   var image;
   $("#option_3").click(function(){
+      display_ct();
       simulation = setInterval(function(){
       $("#console_session_1").hide();
       $("#database").hide();
@@ -86,7 +100,6 @@ $(document).ready(function(){
 
       $.get(host+ "/3", function(data){
         clearInterval(blinkIcon);
-        console.log(data);
         if (data["type"] == "stranger"){
           var myObject = "<div id='" + data["id"] + "'>" ;
           myObject = myObject + "<img src='waitting_people_stranger.png' style='height:3%; width: 3%;'>";
@@ -129,6 +142,7 @@ $(document).ready(function(){
           }
         }, 1000);
       });
+
 
       $("#option_4").click(function(){
         clearInterval(simulation);
