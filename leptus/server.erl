@@ -5,7 +5,8 @@
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, 
 	 terminate/2, code_change/3]).
 
--export([start/0, add/3, verify/1, delete/1, get_db/0, get_length/0]).
+-export([start/0, add/3, verify/1, delete/1, get_db/0, get_length/0,
+		start_clock/0, time_taken/1, get_time/0, check_time/1]).
 
 %% define-------------------------------------------------------------
 -define(SERVER, ?MODULE).
@@ -21,7 +22,11 @@ get_length() ->
 %% add new employee---------------------------------------------------
 %%--------------------------------------------------------------------
 %%--------------------------------------------------------------------
-add(Name, Id, Per) ->
+add(Name, Id, TypePer) ->
+	Per = case TypePer of
+		1 -> normal;
+		2 -> vip
+	end,
 	gen_server:call(?MODULE, 
 			{add, {Name, Id, Per}}).
 
@@ -70,12 +75,24 @@ handle_call({add, {Name, Id, Per}}, _From, Library) ->
 
 % call server function verify id
 handle_call({verify, Id}, _From, Library) ->
+	{Hour, _} = get_time(),
+	InTime = check_time(Hour),
 	Response = case maps:is_key(Id, Library) of
 		true ->
-			{Name, _} = maps:get(Id, Library),
-			{admission, Name};
-		false ->
-			no_admission
+			{_, Per} = maps:get(Id, Library),
+			case InTime of
+				true ->
+					{admission, time_in};
+				false ->
+					case Per of
+						vip ->	
+							{admission, time_in};
+						normal ->
+							{no_admission, time_out}
+					end
+			end;
+		_ ->
+			{no_admission, stranger}
 	end,
 	gen_server:reply(_From, Response),
 	{reply, Response, Library};
@@ -112,7 +129,9 @@ handle_cast(_Msg, State) ->
 %% start server-------------------------------------------------------
 %%--------------------------------------------------------------------
 %%--------------------------------------------------------------------
-start() -> gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+start() -> 
+	start_clock(),
+	gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
 %% init when start a server-------------------------------------------
 %%--------------------------------------------------------------------
@@ -139,3 +158,48 @@ terminate(_Reason, _State) ->
 %%--------------------------------------------------------------------
 code_change(_OldVsn, State, _Extra) ->
         {ok, State}.
+
+%% code handling time function----------------------------------------
+%%--------------------------------------------------------------------
+%%--------------------------------------------------------------------
+
+%% convert time to hour, minute---------------------------------------
+check_time(Hour) when Hour < 8 -> false;
+check_time(Hour) when Hour > 21 -> false;
+check_time(_) -> true.
+
+%% convert time to hour, minute---------------------------------------
+change_time(Time) ->
+	Second = Time / 1000000,
+	Hour = round(Second) rem 24,
+	Minute = 0,
+	{Hour, Minute}.
+	 
+%% get time function--------------------------------------------------
+get_time() ->
+	Pid = whereis(myClock),
+	Pid ! {self(), request_time},
+	Time = receive
+			{_, ActuallyTime} ->
+				ActuallyTime;
+			terminate ->
+				ok	
+		end,
+	{Hour, Minute} = change_time(Time),
+	{Hour, Minute}.
+
+%% start clock function-----------------------------------------------
+start_clock() ->
+	Start = os:timestamp(),
+	Pid = spawn(?MODULE, time_taken, [Start]),
+	register(myClock, Pid).
+%% calculate time from starting server--------------------------------
+time_taken(StartTime) -> 
+	receive
+		{From, request_time} ->
+			Time = timer:now_diff(os:timestamp(), StartTime),
+			From ! {self(), Time},
+			time_taken(StartTime);
+		terminate ->
+			ok
+	end.

@@ -1,9 +1,15 @@
 -module(controller).
+% Import all functions------------------------------------------------
+%%--------------------------------------------------------------------
+%%--------------------------------------------------------------------
 -import(server,[add/2, get_db/0, verify/1, get_length/0]).
 
 % Export all functions------------------------------------------------
+%%--------------------------------------------------------------------
+%%--------------------------------------------------------------------
 -export([generate_name/0, generate_permission/0, gen_emp/1, gen_client/0,
-	loop/1, show_emp/0, simulation/1, get_list_db/0, type_simulation/0]).
+	loop/1, show_emp/0, simulation/1, get_list_db/0, type_simulation/0,
+	check_verify/1]).
 
 % Initialization------------------------------------------------------
 -define(second, 1000).
@@ -12,6 +18,17 @@
 % Function main-------------------------------------------------------
 %---------------------------------------------------------------------
 %---------------------------------------------------------------------
+
+% Check verify for an employee----------------------------------------
+check_verify(ID) ->
+	server:verify(ID),
+	Result = receive
+      		{_, Message} ->
+				Message;
+			terminate ->
+				ok
+    		end,
+	Result.
 
 % create 1 employee who is described by a process---------------------
 %% [{request_entry, }]
@@ -25,17 +42,9 @@ gen_client() ->
 					existed~n~n", [Name]),		
 			gen_client();
 
-
 		{From, request_entry} ->
-    		server:verify(self()),
-			receive
-      			{_, {admission, _}} ->
-        			From ! {self(), admission};
-      			{_, no_admission} ->
-        			From ! {self(), no_admission};
-				terminate ->
-					ok
-    		end,
+    		Message = check_verify(self()),
+			From ! {self(), Message},
 			gen_client();	
 		
 		terminate ->
@@ -73,23 +82,21 @@ show_emp() ->
 % get list database-----------------------------------------------------
 get_list_db() ->
 	server:get_db(),
-	Result =
-		receive
-			{_, {get_db, Message}} ->
-				Message;
-			{_, _} ->
-				[];
-			terminate ->
-				ok
-		end,
+	Result = receive
+				{_, {get_db, Message}} ->
+					Message;
+				{_, _} ->
+					[];
+				terminate ->
+					ok
+			end,
 	Result.
 
 
 % Type simulation-----------------------------------------------------
 type_simulation() ->
 	Type = crypto:rand_uniform(1, 3),
-	Res = 
-		case Type of
+	Res = case Type of
 			1 -> stranger;
 			2 -> employee	
 		end,
@@ -103,7 +110,7 @@ simulation(stranger) ->
 simulation(employee) ->
 	DB = get_list_db(),
 	Size = length(DB),
-	Number_employee = 	if 
+	Number_employee = if 
 						Size > 0 -> crypto:rand_uniform(1, Size);
 						true -> 0
 					end,

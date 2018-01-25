@@ -25,7 +25,7 @@ $(document).ready(function(){
               $("#result").show();
               setTimeout(function() {
                 $("#result").fadeOut().empty()
-              }, 1500);
+              }, 1000);
             }
         });
 
@@ -82,15 +82,16 @@ $(document).ready(function(){
           myObject = myObject + "<figcaption>" + x + "</figcaption></div><br>";
           $("#waitingArea").append(myObject);
         }
-    });
+      });
+
       $.get(host+ "/3", function(data){
-        console.log(data);
         clearInterval(blinkIcon);
+        console.log(data);
         if (data["type"] == "stranger"){
           var myObject = "<div id='" + data["id"] + "'>" ;
           myObject = myObject + "<img src='waitting_people_stranger.png' style='height:3%; width: 3%;'>";
           myObject = myObject + "<figcaption>" + data["id"] + "</figcaption>";
-          myObject = myObject + "May I get admission to the building</div><br>";
+          myObject = myObject + "I am stranger. May I get admission to the building?</div><br>";
           $("#waitingArea").append(myObject);
           var myId = "#\\<0\\." + String(data["id"]).substr(3, 3) + "\\.0\\>";
           blinkIcon = setInterval(blinker, 500, myId);
@@ -98,7 +99,7 @@ $(document).ready(function(){
         }else{
           var myId = "#\\<0\\." + String(data["id"]).substr(3, 3) + "\\.0\\>";
           blinkIcon = setInterval(blinker, 1000, myId);
-          $(myId).append("May I get admission to enter to the building");
+          $(myId).append("I am employee. May I get admission to enter to the building?");
         }
 
         var canvas = document.getElementById("myCanvas");
@@ -106,18 +107,32 @@ $(document).ready(function(){
         image = new Image();
 
         image.onload = function() {
-          ctx.drawImage(image, 10, 10, 100, 100);
+          ctx.drawImage(image, 10, 10, 50, 50);
         };
         setTimeout(function(){
-          if (data["server"] == "admission"){
+          if (data["type"] == "employee" && data["server"] == "time_in"){
             image.src = "admission.jpg";
           }else{
             image.src = "no_admission.jpg";
           }
         }, 1000);
+
+        var image1 = new Image();
+        image1.onload = function(){
+          ctx.drawImage(image1, 10, 80, 50, 50);
+        };
+        setTimeout(function(){
+          if (data["type"] == "employee"){
+            image1.src = "waitting_people.png";
+          }else{
+            image1.src = "waitting_people_stranger.png";
+          }
+        }, 1000);
       });
+
       $("#option_4").click(function(){
         clearInterval(simulation);
+        clearInterval(blinkIcon);
         $("#option_4").hide();
       });
     }, 3000);
